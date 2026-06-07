@@ -4,21 +4,37 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CARS } from "@/lib/drivenova/cars";
-import { Check, Calendar } from "lucide-react";
+import { Check, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { bookTestDrive } from "@/lib/api/example.functions";
 
 export function TestDrive() {
   const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", carId: CARS[0].id, date: "", city: "Mumbai" });
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name || !form.phone || !form.date) {
       toast.error("Please complete all fields");
       return;
     }
-    setDone(true);
-    toast.success("Test drive booked! We'll be in touch.");
+    
+    setLoading(true);
+    try {
+      const result = await bookTestDrive({ data: form });
+      if (result.success) {
+        setDone(true);
+        toast.success(result.message || "Test drive booked! We'll be in touch.");
+      } else {
+        toast.error("Failed to book test drive");
+      }
+    } catch (error) {
+      console.error("Booking error:", error);
+      toast.error("Error booking test drive. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -54,7 +70,8 @@ export function TestDrive() {
             <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-secondary border-border h-11" />
           </Field>
           <div className="flex items-end">
-            <Button type="submit" className="w-full h-11 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:opacity-90 gap-2">
+            <Button type="submit" disabled={loading || done} className="w-full h-11 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:opacity-90 gap-2">
+              {loading && <Loader2 className="size-4 animate-spin" />}
               {done ? <><Check className="size-4" /> Booked</> : <><Calendar className="size-4" /> Book Test Drive</>}
             </Button>
           </div>

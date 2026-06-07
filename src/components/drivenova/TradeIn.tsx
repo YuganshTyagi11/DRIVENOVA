@@ -3,7 +3,9 @@ import { SectionHeader } from "./SectionHeader";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { submitTradeIn } from "@/lib/api/example.functions";
 
 const BRANDS = ["Maruti", "Hyundai", "Tata", "Honda", "Toyota", "Mahindra", "Kia", "BMW", "Mercedes", "Audi"];
 
@@ -13,7 +15,10 @@ export function TradeIn() {
   const [year, setYear] = useState("2020");
   const [km, setKm] = useState("45000");
   const [condition, setCondition] = useState("good");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const value = useMemo(() => {
     const base: Record<string, number> = { Maruti: 5, Hyundai: 6, Tata: 5.5, Honda: 7, Toyota: 7.5, Mahindra: 8, Kia: 7, BMW: 18, Mercedes: 22, Audi: 20 };
@@ -24,6 +29,24 @@ export function TradeIn() {
   }, [brand, year, km, condition]);
 
   const fmt = (n: number) => "₹" + n.toLocaleString("en-IN");
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const result = await submitTradeIn({ data: { brand, model, year, km, condition, email, phone } });
+      if (result.success) {
+        setSubmitted(true);
+        toast.success(result.message || "Valuation submitted! Our team will contact you.");
+      } else {
+        toast.error(result.message || "Failed to submit valuation");
+      }
+    } catch (error) {
+      console.error("Trade-in error:", error);
+      toast.error("Error submitting valuation");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section id="tradein" className="py-24 px-6 bg-secondary/20">
@@ -60,8 +83,15 @@ export function TradeIn() {
                   </SelectContent>
                 </Select>
               </Field>
+              <Field label="Email (Optional)">
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" type="email" className="bg-secondary border-border h-11" />
+              </Field>
+              <Field label="Phone (Optional)">
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" className="bg-secondary border-border h-11" />
+              </Field>
             </div>
-            <Button onClick={() => setSubmitted(true)} className="w-full h-12 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:opacity-90 gap-2">
+            <Button onClick={handleSubmit} disabled={loading} className="w-full h-12 bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:opacity-90 gap-2">
+              {loading && <Loader2 className="size-4 animate-spin" />}
               <Sparkles className="size-4" /> Get Valuation
             </Button>
           </div>

@@ -1,0 +1,10 @@
+{
+  "buildCommand": "bun install && bun run build",
+  "installCommand": "bun install",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "git": {
+    "deploymentEnabled": true
+  }
+}
